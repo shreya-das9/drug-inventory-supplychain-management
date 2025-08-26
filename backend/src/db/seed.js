@@ -49,11 +49,16 @@ const seedUsers = async () => {
 
     for (const user of users) {
       const hashedPassword = await bcrypt.hash(user.password, 12);
+
+      // Use email prefix as username (before @)
+      const username = user.email.split('@')[0];
+
       await client.query(
-        `INSERT INTO users (email, password_hash, first_name, last_name, role, is_verified) 
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [user.email, hashedPassword, user.firstName, user.lastName, user.role, true]
+        `INSERT INTO users (username, email, password_hash, first_name, last_name, role, is_active) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [username, user.email, hashedPassword, user.firstName, user.lastName, user.role, true]
       );
+
       logger.info(`Created user: ${user.email} with role: ${user.role}`);
     }
 
