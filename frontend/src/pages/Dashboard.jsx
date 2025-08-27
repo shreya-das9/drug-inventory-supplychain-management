@@ -15,11 +15,18 @@ import {
 const Dashboard = () => {
   const { user, dashboardData, getDashboard, loading } = useAuth();
 
-  useEffect(() => {
-    if (user && !dashboardData) {
+ useEffect(() => {
+  if (user && !dashboardData) {
+    // only run if token exists
+    const token = localStorage.getItem("accessToken");
+    if (token) {
       getDashboard();
     }
-  }, [user, dashboardData, getDashboard]);
+  }
+  // run only once when user changes, not every re-render
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [user]);
+
 
   if (loading) {
     return (

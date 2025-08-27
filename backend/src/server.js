@@ -1,8 +1,12 @@
 const app = require('./app');
 const config = require('./config/env');
 const pool = require('./config/db');
-
+import cors from 'cors';
 const PORT = config.PORT;
+app.use(cors({
+  origin: process.env.FRONTEND_URL,  // ✅ will now be http://localhost:5173
+  credentials: true
+}));
 
 // Test database connection on startup
 async function startServer() {

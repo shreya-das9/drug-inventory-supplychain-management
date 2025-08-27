@@ -108,50 +108,46 @@
 
 
 const jwt = require('jsonwebtoken');
-const pool = require('../db/connection');
-const logger = require('../utils/logger');
+const { pool } = require('../config/db');
+// const logger = require('../utils/logger'); // ❌ Remove this line
 
 const auth = async (req, res, next) => {
     try {
         const token = req.header('Authorization')?.replace('Bearer ', '');
-
+        
         if (!token) {
             return res.status(401).json({
                 success: false,
                 message: 'No token provided, authorization denied'
             });
         }
-
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // Verify user still exists and is active
+        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'supersecret');
+        
+        // Fixed: Use decoded.id instead of decoded.userId, include email
         const result = await pool.query(
-            'SELECT id, username, role, status FROM users WHERE id = $1',
-            [decoded.userId]
+            'SELECT id, username, email, role FROM users WHERE id = $1',
+            [decoded.id]
         );
-
+        
         if (result.rows.length === 0) {
             return res.status(401).json({
                 success: false,
                 message: 'Token is not valid - user not found'
             });
         }
-
+        
         const user = result.rows[0];
-
-        if (user.status !== 'active') {
-            return res.status(401).json({
-                success: false,
-                message: 'Account is not active'
-            });
-        }
-
+        
+        // Fixed: Include email and id
         req.user = {
+            id: user.id,
             userId: user.id,
             username: user.username,
+            email: user.email,
             role: user.role
         };
-
+        
         next();
     } catch (error) {
         if (error.name === 'JsonWebTokenError') {
@@ -160,15 +156,16 @@ const auth = async (req, res, next) => {
                 message: 'Token is not valid'
             });
         }
-
+        
         if (error.name === 'TokenExpiredError') {
             return res.status(401).json({
                 success: false,
                 message: 'Token has expired'
             });
         }
-
-        logger.error('Auth middleware error', { error: error.message });
+        
+        // ✅ Use console.error instead of logger
+        console.error('Auth middleware error', { error: error.message });
         res.status(500).json({
             success: false,
             message: 'Server error in authentication'
@@ -176,7 +173,6 @@ const auth = async (req, res, next) => {
     }
 };
 
-// Role-based authorization middleware
 const authorize = (roles = []) => {
     return (req, res, next) => {
         if (!req.user) {
@@ -185,14 +181,14 @@ const authorize = (roles = []) => {
                 message: 'Authentication required'
             });
         }
-
+        
         if (roles.length && !roles.includes(req.user.role)) {
             return res.status(403).json({
                 success: false,
                 message: 'Insufficient permissions'
             });
         }
-
+        
         next();
     };
 };

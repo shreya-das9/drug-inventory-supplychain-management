@@ -4,10 +4,31 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
 
 const router = express.Router();
-
+//app.use(express.json())
 // Login route
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  //const { email, password } = req.body;
+  // Debug and safety check
+console.log('Request received:');
+console.log('Headers:', req.headers);
+console.log('Body:', req.body);
+console.log('Content-Type:', req.get('content-type'));
+
+if (!req.body) {
+  return res.status(400).json({ 
+    error: 'Request body is missing',
+    debug: 'Make sure express.json() middleware is configured and Content-Type is application/json'
+  });
+}
+
+const { email, password } = req.body;
+
+if (!email || !password) {
+  return res.status(400).json({ 
+    error: 'Email and password are required',
+    received: req.body
+  });
+}
 
   try {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);

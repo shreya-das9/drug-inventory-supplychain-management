@@ -238,6 +238,7 @@
 
 // module.exports = app;
 // src/app.js
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -245,16 +246,24 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 
+
+
+
 const { testConnection } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
 
 // Routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
-const dashboardRoutes = require('./routes/dashboard.routes');  // ✅ add here
+const dashboardRoutes = require('./routes/dashboard.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// ✅ BODY PARSERS MUST COME FIRST
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Security middleware
 app.use(helmet());
@@ -275,20 +284,8 @@ const authLimiter = rateLimit({
   message: "Too many login attempts, try again later."
 });
 
-// Apply only to /api/auth
+// ✅ ROUTES COME AFTER MIDDLEWARE
 app.use('/api/auth', authLimiter, authRoutes);
-
-// Other routes without limiter
-app.use('/api/users', userRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-
-
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-
-// ✅ Routes
-app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
