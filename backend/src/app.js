@@ -239,15 +239,87 @@
 // module.exports = app;
 // src/app.js
 
+// require('dotenv').config();
+// const express = require('express');
+// const cors = require('cors');
+// const helmet = require('helmet');
+// const rateLimit = require('express-rate-limit');
+// const cookieParser = require('cookie-parser');
+
+
+
+
+// const { testConnection } = require('./config/db');
+// const errorHandler = require('./middleware/errorHandler');
+
+// // Routes
+// const authRoutes = require('./routes/auth');
+// const userRoutes = require('./routes/users');
+// const dashboardRoutes = require('./routes/dashboard.routes');
+
+// const app = express();
+// const PORT = process.env.PORT || 5000;
+
+// // ✅ BODY PARSERS MUST COME FIRST
+// app.use(express.json({ limit: '10mb' }));
+// app.use(express.urlencoded({ extended: true }));
+// app.use(cookieParser());
+
+// // Security middleware
+// app.use(helmet());
+// app.use(cors({
+//   origin: [
+//     'http://localhost:5173',   // Vite frontend
+//     'http://localhost:3000'    // React CRA
+//   ],
+//   credentials: true,
+//   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+//   allowedHeaders: ['Content-Type','Authorization'],
+// }));
+
+// // Rate limiting
+// const authLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 20, // only 20 login attempts
+//   message: "Too many login attempts, try again later."
+// });
+
+// // ✅ ROUTES COME AFTER MIDDLEWARE
+// app.use('/api/auth', authLimiter, authRoutes);
+// app.use('/api/users', userRoutes);
+// app.use('/api/dashboard', dashboardRoutes);
+
+// // Health check
+// app.get('/api/health', (req, res) => {
+//   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+// });
+
+// // 404 handler
+// app.use('*', (req, res) => res.status(404).json({ error: 'Route not found' }));
+
+// // Error handler
+// app.use(errorHandler);
+
+// // Boot
+// (async () => {
+//   const ok = await testConnection();
+//   if (!ok) {
+//     console.error('❌ Failed to connect to database');
+//     process.exit(1);
+//   }
+//   app.listen(PORT, () => {
+//     console.log(`🚀 Server running on port ${PORT}`);
+//   });
+// })();
+
+// module.exports = app;
+// app.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
-
-
-
 
 const { testConnection } = require('./config/db');
 const errorHandler = require('./middleware/errorHandler');
@@ -260,31 +332,26 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ✅ BODY PARSERS MUST COME FIRST
+// Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-// Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: [
-    'http://localhost:5173',   // Vite frontend
-    'http://localhost:3000'    // React CRA
-  ],
+  origin: ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
 }));
 
-// Rate limiting
+// Rate limiter for login
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // only 20 login attempts
+  windowMs: 15 * 60 * 1000,
+  max: 20,
   message: "Too many login attempts, try again later."
 });
 
-// ✅ ROUTES COME AFTER MIDDLEWARE
+// Routes
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/dashboard', dashboardRoutes);
